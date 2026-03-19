@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+  <meta name="description" content="Navigate REVA University campus with visual step-by-step indoor directions. No GPS needed — just scan a QR code and go.">
+  <meta name="theme-color" content="#1A237E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>CampusNav — REVA University Indoor Navigation</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
+</head>
+<body>
+  <div class="app" id="app">
+
+    <!-- =============== WELCOME SCREEN =============== -->
+    <div class="screen welcome-screen active" id="screen-welcome">
+      <div class="welcome-logo">🧭</div>
+      <h1 class="welcome-title">CampusNav</h1>
+      <p class="welcome-campus-name">REVA University</p>
+      <p class="welcome-tagline">Visual indoor navigation — no GPS needed. Just follow the photos.</p>
+      <button class="welcome-btn" id="btn-get-started" onclick="app.showScreen('search')">
+        Where do you want to go?
+      </button>
+      <div class="welcome-features">
+        <div class="welcome-feature">
+          <div class="welcome-feature-icon">📸</div>
+          <span>Photo Guide</span>
+        </div>
+        <div class="welcome-feature">
+          <div class="welcome-feature-icon">🚫📡</div>
+          <span>No GPS</span>
+        </div>
+        <div class="welcome-feature">
+          <div class="welcome-feature-icon">⚡</div>
+          <span>Instant</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============== SEARCH / DESTINATION SCREEN =============== -->
+    <div class="screen" id="screen-search">
+      <div class="search-header">
+        <div class="search-header-top">
+          <button class="back-btn" onclick="app.showScreen('welcome')">←</button>
+          <h1>Where to?</h1>
+          <button class="theme-toggle" id="btn-theme" onclick="app.toggleTheme()">🌙</button>
+        </div>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="Search buildings, blocks, auditoriums..." oninput="app.filterBuildings(this.value)" autocomplete="off">
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <button class="quick-action" onclick="app.navigateTo('library')">
+          <div class="quick-action-icon">📚</div>
+          <div class="quick-action-label">Library</div>
+        </button>
+        <button class="quick-action" onclick="app.navigateTo('saugandhika')">
+          <div class="quick-action-icon">🍽️</div>
+          <div class="quick-action-label">Food Court</div>
+        </button>
+        <button class="quick-action" onclick="app.navigateTo('admissions')">
+          <div class="quick-action-icon">📝</div>
+          <div class="quick-action-label">Admissions</div>
+        </button>
+      </div>
+
+      <!-- Categories -->
+      <div class="categories" id="categories"></div>
+
+      <!-- Building List -->
+      <div class="section-header">
+        <span class="section-title" id="building-list-title">All Destinations</span>
+      </div>
+      <div class="building-list" id="building-list"></div>
+    </div>
+
+    <!-- =============== ROUTE PREVIEW SCREEN =============== -->
+    <div class="screen" id="screen-route">
+      <div class="route-header">
+        <div class="search-header-top">
+          <button class="back-btn" onclick="app.showScreen('search')">←</button>
+          <h1>Route Preview</h1>
+          <div style="width:36px"></div>
+        </div>
+        <div class="route-destination" id="route-dest-name"></div>
+        <div class="route-stats">
+          <div class="route-stat">
+            <span class="route-stat-icon">🚶</span>
+            <span id="route-distance"></span>
+          </div>
+          <div class="route-stat">
+            <span class="route-stat-icon">⏱️</span>
+            <span id="route-time"></span>
+          </div>
+          <div class="route-stat accessibility-badge" id="route-accessibility" style="display:none">
+            <span>♿</span>
+            <span>Accessible</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map Preview -->
+      <div class="map-container">
+        <div class="map-label">🗺️ Campus Map</div>
+        <div class="campus-map" id="route-map"></div>
+      </div>
+
+      <!-- Steps Preview -->
+      <div class="route-steps-preview" id="route-steps-preview"></div>
+
+      <!-- Start Navigation -->
+      <button class="start-nav-btn" id="btn-start-nav" onclick="app.startNavigation()">
+        🧭 Start Navigation
+      </button>
+    </div>
+
+    <!-- =============== NAVIGATION SCREEN =============== -->
+    <div class="screen nav-screen" id="screen-nav">
+      <div class="nav-top-bar">
+        <button class="nav-close-btn" onclick="app.exitNavigation()">✕</button>
+        <div class="nav-top-info">
+          <div class="nav-top-dest" id="nav-dest-name"></div>
+          <div class="nav-top-progress" id="nav-progress-text"></div>
+        </div>
+        <div style="width:36px"></div>
+      </div>
+      <div class="nav-progress-bar">
+        <div class="nav-progress-fill" id="nav-progress-fill"></div>
+      </div>
+
+      <div id="nav-step-container"></div>
+
+      <div class="nav-controls" id="nav-controls">
+        <button class="nav-btn nav-btn-prev" id="nav-btn-prev" onclick="app.prevStep()">← Previous</button>
+        <button class="nav-btn nav-btn-next" id="nav-btn-next" onclick="app.nextStep()">Next →</button>
+      </div>
+    </div>
+
+    <!-- =============== ARRIVED SCREEN =============== -->
+    <div class="screen" id="screen-arrived">
+      <div style="padding-top: calc(var(--space-2xl) + env(safe-area-inset-top, 0px))"></div>
+      <div class="arrived-screen">
+        <div class="arrived-animation">📍</div>
+        <h2 class="arrived-title">You've Arrived!</h2>
+        <p class="arrived-building-name" id="arrived-name"></p>
+
+        <div class="arrived-info-card" id="arrived-info"></div>
+
+        <div class="arrived-actions">
+          <button class="arrived-btn arrived-btn-secondary" onclick="app.showScreen('search')">New Route</button>
+          <button class="arrived-btn arrived-btn-primary" onclick="app.showScreen('welcome')">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============== MAP SCREEN =============== -->
+    <div class="screen map-screen" id="screen-map">
+      <div class="map-header">
+        <button class="back-btn" onclick="app.showScreen('search')" style="background:var(--bg);color:var(--text-primary);border:1px solid var(--border);">←</button>
+        <h2>Campus Map</h2>
+      </div>
+      <div class="campus-map map-full" id="full-map"></div>
+    </div>
+
+    <!-- =============== QR SCREEN =============== -->
+    <div class="screen" id="screen-qr">
+      <div class="qr-header">
+        <button class="back-btn" onclick="app.showScreen('search')" style="background:var(--bg);color:var(--text-primary);border:1px solid var(--border);">←</button>
+        <h2>QR Codes</h2>
+      </div>
+      <div class="qr-screen">
+        <div class="qr-card">
+          <div class="qr-placeholder" id="qr-display">
+            <canvas id="qr-canvas"></canvas>
+          </div>
+          <h3 style="margin-bottom:8px;">Main Gate Entry Point</h3>
+          <p class="qr-info">Print this QR code and place it at the campus Main Gate. Visitors scan it to open CampusNav with Main Gate as their starting point.</p>
+        </div>
+        <p style="margin-top:24px;font-size:0.85rem;color:var(--text-muted);">
+          QR code links to this app with the starting location pre-set.
+        </p>
+      </div>
+    </div>
+
+    <!-- =============== BOTTOM NAVIGATION =============== -->
+    <nav class="bottom-nav" id="bottom-nav">
+      <button class="bottom-nav-item active" data-screen="search" onclick="app.showScreen('search')">
+        <span class="bottom-nav-icon">🔍</span>
+        <span>Search</span>
+      </button>
+      <button class="bottom-nav-item" data-screen="map" onclick="app.showScreen('map')">
+        <span class="bottom-nav-icon">🗺️</span>
+        <span>Map</span>
+      </button>
+      <button class="bottom-nav-item" data-screen="qr" onclick="app.showScreen('qr')">
+        <span class="bottom-nav-icon">📱</span>
+        <span>QR Code</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
